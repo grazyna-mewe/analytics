@@ -1,18 +1,51 @@
 library(bslib)
 
+user_names = c("User ID" = "userPk",  
+               "Public Link ID" ="publicLinkId",
+               "First Name" = "firstName",
+               "Last Name" ="lastName",
+               "User is public" = "user_public",
+               "User is NSFW" = "user_nsfw",
+               "Continent" = "mainContinent",
+               "Locale" = "locale", 
+               "Timezone" = "timezone", 
+               "User location" = "author_location",
+               "User keywords" ="user_keywords",
+               "User receivieng emojis" = "user_receiving_emojis",
+               "Total nr of user emojied" = "total_user_emojied", 
+               "Total nr of user emojied per post" = "total_user_emojied_per_post",
+               "Total nr of posts" = "total_nr_posts",
+               "Total nr of group posts" = "total_nr_group_posts")
+
+group_names = c("Total nr of group posts" = "groupRefId",
+                "Group name" = "name",
+                "Group thematic type" = "groupThematicType", 
+                "Group model type" = "groupModelType",
+                "Is group banned" = "group_banned",
+                "Group keywords" = "group_keywords",
+                "Group most popular emojis" = "group_receiving_emojis",
+                "Total nr of user emojied" = "user_emojied",
+                "Total nr of user emojied per post" = "user_emojied_per_post",
+                "Total nr of posts" = "nr_posts")
+
+post_names = unique(c("Post ID" = "objectId",
+                       user_names,
+                       group_names))
+
 ui <- page_sidebar(
-  
+
   # App title ----
   title = "Trending on mewe",
-  
+
   # Sidebar panel for inputs ----
   sidebar = sidebar(
-    
+
     h3("Post filters"),
-    # selectInput("system", "System", 
+    # selectInput("system", "System",
     #             multiple = T,
-    #             choices = c("group", "contacts", "event", "page"), 
+    #             choices = c("group", "contacts", "event", "page"),
     #             selected = c("group", "contacts", "event", "page")),
+    sliderInput("last_days", "How many days ago", min = 1, max = 7, value = 7, step = 1),
     checkboxInput("group_posts",
                   "Group posts",
                   value = c(T)),
@@ -25,104 +58,91 @@ ui <- page_sidebar(
     checkboxInput("group_banned",
                   "Posted in banned group",
                   value = c(T)),
-    
+    # selectInput("author_location", label = "Author country", #label = h3("Select box"),
+    #             choices = c("All", "United States", "Malaysia", "India", "Hong Kong", "United Kingdom",
+    #                         "Australia", "Canada", "Germany", "South Korea", "Japan", "Italy",
+    #                         "France", "Mexico", "Indonesia", "Brazil", "Saudi Arabia", "Sweden",
+    #                         "Spain", "The Netherlands", "Belgium"),
+    #             multiple = T,
+    #             selected = "All"),
+
     h3("Audience filters"),
-    
+
     # Input: Select the random distribution type ----
     # checkboxGroupInput("client_type", "Client type",
     #              c("ios", "web", "android")),
     # # br() element to introduce extra vertical spacing ----
     # br(),
     # Input: Slider for the number of observations to generate ----
-    selectInput("location", label = "Region", #label = h3("Select box"), 
-                choices = c("All", "United States", "Malaysia", "India", "Hong Kong", "United Kingdom", 
-                               "Australia", "Canada", "Germany", "South Korea", "Japan", "Italy", 
-                               "France", "Mexico", "Indonesia", "Brazil", "Saudi Arabia", "Sweden", 
-                               "Spain", "The Netherlands", "Belgium"), 
+    selectInput("location", label = "Country", #label = h3("Select box"),
+                choices = c("All", "United States", "Malaysia", "India", "Hong Kong", "United Kingdom",
+                               "Australia", "Canada", "Germany", "South Korea", "Japan", "Italy",
+                               "France", "Mexico", "Indonesia", "Brazil", "Saudi Arabia", "Sweden",
+                               "Spain", "The Netherlands", "Belgium"),
                 multiple = T,
-                selected = "All"),
-    checkboxInput("premium",
-                  "Only premium members",
-                  value = c(F))
+                selected = "All")
+    # checkboxInput("premium",
+    #               "Only premium members",
+    #               value = c(F))
   ),
 
-  
+
   # Main panel for displaying outputs ----
   # Output: A tabset that combines three panels ----
   navset_card_tab(
     title = "",
-    # # Panel with plot ----
-    # nav_panel("Plot", plotOutput("plot")),
- 
-    # Panel with table ----
+    
+    nav_panel("Users",
+              selectInput("users_cols", "Show columns",
+                          choices = user_names,
+                          width = "55%",
+                          
+                          selected = c("publicLinkId", "user_public", "user_nsfw", "author_location",
+                                       "user_keywords", "user_receiving_emojis",
+                                       "total_user_emojied", "total_nr_posts"),
+                          multiple = TRUE),
+              div(DT::dataTableOutput("users_table"))),
+
+    nav_panel("Groups",
+              selectInput("groups_cols", "Show columns",
+                          width = "55%",
+                          choices = group_names,
+                          selected = c("name", "author_location", "groupThematicType",
+                                       "group_banned",  "group_keywords", "nr_posts",
+                                       "user_emojied", "user_emojied_per_post"),
+                          multiple = TRUE),
+              div(DT::dataTableOutput("groups_table"))),
+
     nav_panel("Posts",
               selectInput("posts_cols", "Show columns",
-                          c("objectId", "userPk", "publicLinkId", "firstName", "lastName", 
-                            "mainContinent", "locale", "timezone", "groupRefId", "groupModelType", 
-                            "groupThematicType", "name", "description", "postType", "system", 
-                            "emojis", "user_public", "user_nsfw", "group_banned", "user_emojied", 
-                            "text", "group receivig emojis" = "group_receiving_emojis", "group_keywords", "user_receiving_emojis", 
-                            "user_keywords"),
+                          choices = post_names,
+                          width = "55%",
+                          
                           selected = c("publicLinkId",
-                                       "postType", 
+                                       "postType",
                                        "system",
+                                       "author_location",
                                        "keywords",
                                        "emojis",
-                                       "user_public", 
-                                       "user_emojied"), 
+                                       "user_public",
+                                       "user_emojied"),
                           multiple = TRUE),
-              div(dataTableOutput("posts_table"))),
-    
-    nav_panel("Users", 
-              selectInput("users_cols", "Show columns",
-                          c("userPk", "user_public", "user_nsfw", "firstName", "lastName", 
-                            "publicLinkId", "mainContinent", "locale", "timezone", "user_emojied", 
-                            "user_keywords", "user_receiving_emojis",
-                            "nr_posts", "nr_group_posts"),
-                          selected = c("publicLinkId", "user_keywords", "user_receiving_emojis",
-                                       "user_public", "user_nsfw", "nr_posts", "nr_group_posts",
-                                       "user_emojied"), 
-                          multiple = TRUE),
-              div(dataTableOutput("users_table"))),
-    
-    nav_panel("Group", 
-              selectInput("groups_cols", "Show columns",
-                          c("groupRefId", "name", "groupModelType", "groupThematicType",
-                            "group_banned"),
-                          selected = c("name", "groupModelType", "groupThematicType",
-                                       "group_banned", "nr_posts",
-                                       "user_emojied"), 
-                          multiple = TRUE),
-              div(dataTableOutput("groups_table"))),
-    
+              div(DT::dataTableOutput("posts_table"))),
+
     # Panel with summary ----
-    nav_panel("Summary", 
-              selectInput("groups_cols", "Show columns",
-                          c("user_nsfw", "group_banned", "system", "groupThematicType", "groupModelType",
+    nav_panel("Summary",
+              selectInput("summarize_by", "Summarize by",
+                          c("user_nsfw", "group_banned", "author_location", "system", "groupThematicType", "groupModelType",
                             "mainContinent", "locale", "timezone", "user_public"),
-                          selected = c("system"), 
+                          selected = c("system"),
                           multiple = TRUE),
-              div(dataTableOutput("summary_table")))
-  )
-  # ,
-  # 
-  # navset_card_tab(
-  #   title = "Users",
-  #   # # Panel with plot ----
-  #   # nav_panel("Plot", plotOutput("plot")),
-  #   # Panel with table ----
-  #   nav_panel("Users table", dataTableOutput("users_table")),
-  #   # Panel with summary ----
-  #   nav_panel("Users summary", verbatimTextOutput("summary")),
-  # )
-  # 
-  # navset_card_tab(
-  #   title = "Groups",
-  #   # # Panel with plot ----
-  #   # nav_panel("Plot", plotOutput("plot")),
-  #   # Panel with table ----
-  #   nav_panel("Table", dataTableOutput("groups_table")),
-  #   # Panel with summary ----
-  #   nav_panel("Summary", verbatimTextOutput("summary")),
-  # )
+              div(dataTableOutput("summary_table")),
+              selectInput("variable", "Show variable",
+                          c("n_users", "n_emojis", "median_n_emojis", "n_emojis_per_post",
+                            "n_emojis_per_user", "n_posts_per_user", "n_posts"),
+                          selected = c("n_posts", "n_authors"),
+                          multiple = TRUE),
+              plotOutput("summary_plot")
+              )
+  ) 
 )
