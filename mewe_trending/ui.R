@@ -1,36 +1,6 @@
 library(bslib)
 
-user_names = c("User ID" = "userPk",  
-               "Public Link ID" ="publicLinkId",
-               "First Name" = "firstName",
-               "Last Name" ="lastName",
-               "User is public" = "user_public",
-               "User is NSFW" = "user_nsfw",
-               "Continent" = "mainContinent",
-               "Locale" = "locale", 
-               "Timezone" = "timezone", 
-               "User location" = "author_location",
-               "User keywords" ="user_keywords",
-               "User receivieng emojis" = "user_receiving_emojis",
-               "Total nr of user emojied" = "total_user_emojied", 
-               "Total nr of user emojied per post" = "total_user_emojied_per_post",
-               "Total nr of posts" = "total_nr_posts",
-               "Total nr of group posts" = "total_nr_group_posts")
-
-group_names = c("Total nr of group posts" = "groupRefId",
-                "Group name" = "name",
-                "Group thematic type" = "groupThematicType", 
-                "Group model type" = "groupModelType",
-                "Is group banned" = "group_banned",
-                "Group keywords" = "group_keywords",
-                "Group most popular emojis" = "group_receiving_emojis",
-                "Total nr of user emojied" = "user_emojied",
-                "Total nr of user emojied per post" = "user_emojied_per_post",
-                "Total nr of posts" = "nr_posts")
-
-post_names = unique(c("Post ID" = "objectId",
-                       user_names,
-                       group_names))
+load("data/column_names.rda")
 
 ui <- page_sidebar(
 
@@ -97,7 +67,7 @@ ui <- page_sidebar(
                           choices = user_names,
                           width = "55%",
                           
-                          selected = c("publicLinkId", "user_public", "user_nsfw", "author_location",
+                          selected = c("publicLinkId", "user_public", "user_nsfw", "author_location", "followers",
                                        "user_keywords", "user_receiving_emojis",
                                        "total_user_emojied", "total_nr_posts"),
                           multiple = TRUE),
@@ -107,7 +77,7 @@ ui <- page_sidebar(
               selectInput("groups_cols", "Show columns",
                           width = "55%",
                           choices = group_names,
-                          selected = c("name", "author_location", "groupThematicType",
+                          selected = c("name", "author_location", "groupThematicType", "membersCount",
                                        "group_banned",  "group_keywords", "nr_posts",
                                        "user_emojied", "user_emojied_per_post"),
                           multiple = TRUE),

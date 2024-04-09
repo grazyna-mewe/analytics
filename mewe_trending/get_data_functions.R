@@ -1,6 +1,6 @@
 library(mongolite)
 library(data.table)
-source("scripts/mongo_most_popular.R")
+source("/home/rstudio/scripts/mongo_most_popular.R")
 
 get_mongo_data = function(collection,
                           query, 

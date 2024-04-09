@@ -3,9 +3,9 @@ library(data.table)
 library(dplyr)
 library(tidytext)
 library(stringr)
-source("scripts/mongo_most_popular.R")
+source("/home/rstudio/scripts/mongo_most_popular.R")
 source("mewe_trending//get_data_functions.R")
-source("mewe_trending//get_data_store.R")
+# source("mewe_trending//get_data_store.R")
 
 countries_from_token <- readRDS("~/data/countries_from_token.rds")
 sharedposts_all <- readRDS("~/mewe_trending/data/sharedposts_all.rds")
@@ -33,7 +33,7 @@ setkey(popularity_scores, "objectId")
 popularity_scores = popularity_scores[order(location, -n)]
 popularity_scores = popularity_scores[objectId %in% sharedposts_all$`_id`]
 popularity_scores = popularity_scores[!is.na(location)]
-feather::write_feather(popularity_scores, "~/mewe_trending/data/popularity_scores.feather")
+feather::write_feather(popularity_scores, "mewe_trending/data/popularity_scores.feather")
 
 # popularity_scores[sharedposts_all, userPk := i.userPk, on = "objectId"]
 # popularity_scores[sharedposts_all, groupRefId := i.groupRefId, on = "objectId"]
@@ -96,7 +96,7 @@ emoji_by_user = sharedposts_all[order(-u), .(e = unlist(e)), by = userPk][
 # userPk          emojis
 # 1: 63e2fa08e66f5333cb729e4b   ❤,👍,💋,🤩,🔥
 # 2: 5c560817fe294b61f8b9e629   ✡,💣,😡,🇵🇸,🐀
-emoji_by_group = sharedposts_all[!is.na(groupRefId), .(e = unlist(e)), by = groupRefId][
+emoji_by_group = sharedposts_all[!is.na(groupRefId)][order(-u), .(e = unlist(e)), by = groupRefId][
   , .N, by = .(groupRefId, e)][order(-N)][
     , .(emojis = paste(setdiff(e[1:5], NA), collapse = ",")), by = .(groupRefId)]
 
@@ -125,7 +125,9 @@ posts_res = sharedposts_all[order(-u), .(objectId = `_id`,
                                          user_public = public, 
                                          user_nsfw = nsfw, 
                                          group_banned = isBannedAsOffensive,
-                                         user_emojied = u)]
+                                         user_emojied = u,
+                                         followers, following,
+                                         membersCount)]
 setkey(posts_res, "objectId")
 # sharedposts_texts <- readRDS("~/mewe_trending/data/sharedposts_texts.rds")
 # posts_res[sharedposts_texts, text := textEncoded, on = c(objectId = "_id")]  
@@ -153,14 +155,14 @@ users_res = posts_res[,
                         total_nr_group_posts = uniqueN(objectId[system == "group"])),
                       by = .(userPk, user_public, user_nsfw, 
                              firstName, lastName, user_keywords, user_receiving_emojis,
-                             publicLinkId, mainContinent, locale, timezone)][order(-total_user_emojied)]
+                             publicLinkId, mainContinent, locale, timezone, followers, following)][order(-total_user_emojied)]
 
 groups_res = posts_res[!is.na(groupRefId),
                        .(total_user_emojied = sum(user_emojied, na.rm = T),
                          total_nr_posts = uniqueN(objectId), 
                          group_keywords = group_keywords[1]),
                        by = .(groupRefId, name, groupModelType, groupThematicType,
-                              group_banned)][order(-total_user_emojied)]
+                              group_banned, membersCount)][order(-total_user_emojied)]
 
 feather::write_feather(groups_res, "mewe_trending/data/groups_res.feather")
 feather::write_feather(users_res, "mewe_trending/data/users_res.feather")
@@ -173,3 +175,41 @@ posts_res_select = posts_res[objectId %in% select_posts$objectId]
 
 feather::write_feather(posts_res_select, "mewe_trending/data/posts_res_select.feather")
 
+user_names = c("User ID" = "userPk",  
+               "Public Link ID" ="publicLinkId",
+               "First Name" = "firstName",
+               "Last Name" ="lastName",
+               "User is public" = "user_public",
+               "User is NSFW" = "user_nsfw",
+               "Continent" = "mainContinent",
+               "Locale" = "locale", 
+               "Timezone" = "timezone", 
+               "User location" = "author_location",
+               "User keywords" ="user_keywords",
+               "User receivieng emojis" = "user_receiving_emojis",
+               "Total nr of user emojied" = "total_user_emojied", 
+               "Total nr of user emojied per post" = "total_user_emojied_per_post",
+               "Total nr of posts" = "total_nr_posts",
+               "Total nr of group posts" = "total_nr_group_posts",
+               "Followers" = "followers",
+               "Following" = "following")
+
+group_names = c("Total nr of group posts" = "groupRefId",
+                "Group name" = "name",
+                "Group thematic type" = "groupThematicType", 
+                "Group model type" = "groupModelType",
+                "Is group banned" = "group_banned",
+                "Group keywords" = "group_keywords",
+                "Group most popular emojis" = "group_receiving_emojis",
+                "Total nr of user emojied" = "user_emojied",
+                "Total nr of user emojied per post" = "user_emojied_per_post",
+                "Total nr of posts" = "nr_posts",
+                "Members" = "membersCount",
+                "Followers" = "followers",
+                "Following" = "following")
+
+post_names = unique(c("Post ID" = "objectId",
+                      user_names,
+                      group_names[!group_names %in% c("total_nr_group_posts", "total_nr_posts", "nr_posts",
+                                                      "user_emojied_per_post", "total_user_emojied_per_post")]))
+save(user_names, group_names, post_names, file = "mewe_trending/data/column_names.rda")
