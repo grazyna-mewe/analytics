@@ -1,6 +1,6 @@
 library(mongolite)
 library(data.table)
-source("scripts/mongo_most_popular.R")
+source("analytics/mewe_trending/mongo_most_popular.R")
 source("analytics/mewe_trending/get_data_functions.R")
 # d1 = Sys.time() - 7*86400
 d1 = as.POSIXct("2024-04-01 11:53:53 UTC")
@@ -24,7 +24,7 @@ Sys.time()
 
 library(mongolite)
 library(data.table)
-source("scripts/mongo_most_popular.R")
+source("analytics/mongo_most_popular.R")
 source("analytics/mewe_trending/get_data_functions.R")
 sharedposts = readRDS("~/analytics/mewe_trending/data/sharedposts.rds")
 entityemojis = readRDS("~/analytics/mewe_trending/data/entityemojis.rds")
